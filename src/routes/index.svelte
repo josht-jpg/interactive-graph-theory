@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Node from '../components/Node.svelte';
 	import type { INode } from '../components/Node.svelte';
+	import Group from '../components/Group.svelte';
 
 	let nodes: INode[] = [];
 
@@ -28,8 +29,15 @@
 
 <svelte:window on:resize={onResize} />
 
-<svg xmlns="http://www.w3.org/2000/svg" class="absolute w-full h-full" on:dblclick={createNode}>
-	{#each nodes as node}
-		<Node {node} />
-	{/each}
+<svg
+	id="main-svg"
+	xmlns="http://www.w3.org/2000/svg"
+	class="absolute w-full h-full"
+	on:dblclick={createNode}
+>
+	<Group className="h-full w-full" parentSvgId="main-svg" matrixGroupId="matrix-group">
+		{#each nodes as node}
+			<Node {node} />
+		{/each}
+	</Group>
 </svg>
