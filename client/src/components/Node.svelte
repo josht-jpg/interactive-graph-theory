@@ -1,6 +1,6 @@
 <script lang="ts" context="module">
 	export interface INode {
-		id: number;
+		id: string;
 		xPercent: number;
 		yPercent: number;
 		x: number;
@@ -10,10 +10,15 @@
 
 <script lang="ts">
 	export let node: INode;
+	export let isDragging: boolean;
+	export let isShiftDown: boolean;
 </script>
 
 <circle
-	class="absolute outline outline-1 outline-purple-500 cursor-grab hover:shadow-color-purple-600 rounded-full"
+	id={node.id}
+	class={`absolute outline outline-1 outline-purple-500  ${
+		isDragging ? 'cursor-grabbing' : isShiftDown ? 'cursor-crosshair' : 'cursor-grab'
+	} hover:shadow-color-purple-600 rounded-full `}
 	fill="white"
 	filter="drop-shadow(gray 0 0 4px)"
 	cx={node.x}

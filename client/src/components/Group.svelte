@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { scale as currentScale, shift } from '../stores/Scale.ts';
 
 	export let parentSvgId: string;
 	export let matrixGroupId: string;
@@ -12,7 +13,10 @@
 		x: number;
 		y: number;
 	}
+
+	// TODO: do we need center?
 	let center: ICenter;
+	let zoomTo: { x: number; y: number };
 
 	onMount(() => {
 		const svg = document.getElementById(parentSvgId);
@@ -25,39 +29,54 @@
 			x: width / 2,
 			y: height / 2
 		};
+		zoomTo = { x: center.x, y: center.y };
 	});
 
-	const pan = (dx: number, dy: number) => {
+	export const pan = (dx: number, dy: number) => {
 		transformMatrix[4] += dx;
 		transformMatrix[5] += dy;
+
+		shift.update((shift) => {
+			return {
+				x: shift.x + dx,
+				y: shift.y + dy
+			};
+		});
 	};
 
-	let currentScale = 1;
-
-	const zoom = (scale: number) => {
-		console.log(transformMatrix);
-
-		transformMatrix[4] += (1 - scale) * center.x * currentScale;
-		transformMatrix[5] += (1 - scale) * center.y * currentScale;
+	const zoom = (scale: number, zoomTo: { x: number; y: number }) => {
+		transformMatrix[4] += (1 - scale) * zoomTo.x * $currentScale;
+		transformMatrix[5] += (1 - scale) * zoomTo.y * $currentScale;
 
 		transformMatrix[0] *= scale;
 		transformMatrix[1] *= scale;
 		transformMatrix[2] *= scale;
 		transformMatrix[3] *= scale;
 
-		currentScale *= scale;
+		shift.update((shift) => ({
+			x: shift.x + (1 - scale) * zoomTo.x * $currentScale,
+			y: shift.y + (1 - scale) * zoomTo.y * $currentScale
+		}));
+		currentScale.update((currentScale) => currentScale * scale);
 	};
 
 	const onMouseWheel = (event: WheelEvent) => {
 		if (event.deltaY < 0) {
-			zoom(1.05);
+			zoomTo = { x: event.clientX, y: event.clientY };
+			zoom(1.05, zoomTo);
 		} else if (event.deltaY > 0) {
-			zoom(0.95);
+			zoom(0.95, zoomTo);
 		}
 	};
 
 	const transformMatrixString = (transformMatrix: number[]) =>
 		`matrix (${transformMatrix.join(' ')})`;
+
+	// const onMouseMove = (event: MouseEvent) => {
+	// 	if (isMouseDown) {
+	// 		pan(event.movementX, event.movementY);
+	// 	}
+	// };
 </script>
 
 <svelte:window on:mousewheel={onMouseWheel} />

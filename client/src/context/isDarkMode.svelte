@@ -1,7 +1,7 @@
 <script context="module">
 	// TODO: maybe just use store
 
-	import { setContext } from 'svelte';
+	import { setContext } from 'svelte/types/runtime';
 
 	let isDarkMode = false;
 

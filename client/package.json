@@ -33,6 +33,9 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"classnames": "^2.3.1"
+		"classnames": "^2.3.1",
+		"google-one-tap": "^1.0.6",
+		"graphql": "^16.6.0",
+		"graphql-request": "^5.0.0"
 	}
 }
