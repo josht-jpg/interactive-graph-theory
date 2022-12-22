@@ -7,6 +7,8 @@
 	import Edge from '../components/edges/Edge.svelte';
 	import { request, gql } from 'graphql-request';
 	import AuthButton from '../components/AuthButton.svelte';
+	import edgeEditPanels from '../stores/EdgeEditPanels.ts';
+	import EditEdgePanel from '../components/edges/EditEdgePanel.svelte';
 
 	let nodes: INode[] = [];
 
@@ -33,6 +35,18 @@
 			...node,
 			x: node.xPercent * (window.innerWidth / $currentScale),
 			y: node.yPercent * (window.innerHeight / $currentScale)
+		}));
+
+		edges = edges.map((edge) => ({
+			...edge,
+			start: {
+				x: edge.startPercent.x * (window.innerWidth / $currentScale),
+				y: edge.startPercent.y * (window.innerHeight / $currentScale)
+			},
+			end: {
+				x: edge.endPercent.x * (window.innerWidth / $currentScale),
+				y: edge.endPercent.y * (window.innerHeight / $currentScale)
+			}
 		}));
 	};
 
@@ -207,7 +221,7 @@
 	on:keyup={() => (isShiftDown = false)}
 />
 
-<AuthButton />
+<!-- <AuthButton /> -->
 
 <svg
 	id="main-svg"
@@ -230,3 +244,7 @@
 		{/each}
 	</Group>
 </svg>
+
+{#each $edgeEditPanels as edgeEditPanel}
+	<EditEdgePanel {...edgeEditPanel} />
+{/each}
