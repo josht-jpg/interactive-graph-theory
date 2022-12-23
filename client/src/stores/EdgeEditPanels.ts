@@ -1,10 +1,9 @@
 import type { Coordinate } from '../interfaces';
 import { writable } from 'svelte/store';
+import type { IEdge } from 'src/components/edges/Edge.svelte';
 
 export interface EdgeEditPanelInput {
-	label: string | null;
-	color: string | null;
-	labelColor: string | null;
+	edge: IEdge;
 	clickCoordinates: Coordinate;
 }
 

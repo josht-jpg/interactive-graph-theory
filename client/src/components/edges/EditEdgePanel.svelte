@@ -1,16 +1,40 @@
 <script lang="ts">
+	import edges from '../../stores/Edges';
 	import edgeEditPanels from '../../stores/EdgeEditPanels';
 	import { clickOutside } from '../../utils/clickOutside';
+	import type { IEdge } from './Edge.svelte';
 
-	export let color: string;
-	export let label: string;
-	export let labelColor: string;
+	export let edge: IEdge;
 	export let clickCoordinates: { x: number; y: number };
 
 	const detailsWidthInPx = 275;
 
 	// TODO: fix obvious bug
 	const hidePanel = () => edgeEditPanels.update((panels) => panels.slice(0, -1));
+
+	const FIELD = {
+		label: 'label',
+		color: 'color',
+		colorLabel: 'colorLabel'
+	} as const;
+
+	type Field = keyof typeof FIELD;
+
+	const updateEdge = (field: Field, value: string) => {
+		edges.update((edges) => {
+			const edgeIndex = edges.findIndex((e) => e.id === edge.id);
+			if (edgeIndex === -1) return edges;
+
+			// TODO: see if there's a better way to do this
+			const newEdges = [...edges];
+			newEdges[edgeIndex] = {
+				...newEdges[edgeIndex],
+				[field]: value
+			};
+
+			return newEdges;
+		});
+	};
 </script>
 
 <svelte:window on:mousewheel={hidePanel} />
@@ -34,14 +58,14 @@
 				</label>
 				<span class="inline-block">
 					<input
-						class="input inline-block radius-2 rounded h-8 w-56 border-0 pl-2 m-auto text-center font-bold text-lg"
+						class="input inline-block radius-2 rounded h-8 w-56 border-0 pl-2 m-auto"
 						id="edge-label-input"
 						type="text"
 						name="Edge Label"
-						value={label ?? ''}
-						on:change={(event) => {
+						value={edge.label ?? ''}
+						on:input={(event) => {
 							if (event && event.target) {
-								label = event.target.value;
+								updateEdge(FIELD.label, event.target.value);
 							}
 						}}
 					/>
@@ -55,14 +79,16 @@
 				</label>
 				<span class="inline-block">
 					<input
-						class="input inline-block radius-2 rounded h-8 w-56 border-0 pl-2 m-auto text-center font-bold text-lg"
+						class="input inline-block radius-2 rounded h-8 w-56 border-0 pl-2 m-auto"
 						id="edge-color-input"
 						type="text"
 						name="Edge Color"
-						value={color ?? ''}
-						on:change={(event) => {
+						value={edge.color ?? ''}
+						on:input={(event) => {
+							console.log(event, event?.target?.value);
+
 							if (event && event.target) {
-								color = event.target.value;
+								updateEdge(FIELD.color, event.target.value);
 							}
 						}}
 					/>
@@ -76,14 +102,14 @@
 				</label>
 				<span class="inline-block">
 					<input
-						class="input inline-block radius-2 rounded h-8 w-56 border-0 pl-2 m-auto text-center font-bold text-lg"
+						class="input inline-block radius-2 rounded h-8 w-56 border-0 pl-2 m-auto"
 						id="edge-label-color-input"
 						type="text"
 						name="Edge Label Color"
-						value={labelColor ?? ''}
-						on:change={(event) => {
+						value={edge.labelColor ?? ''}
+						on:input={(event) => {
 							if (event && event.target) {
-								labelColor = event.target.value;
+								updateEdge(FIELD.colorLabel, event.target.value);
 							}
 						}}
 					/>

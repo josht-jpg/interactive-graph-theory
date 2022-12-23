@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { scale as currentScale, shift } from '../stores/Scale.ts';
+	import { scale as currentScale, shift } from '../stores/Scale';
+	import type { INode } from './Node.svelte';
 
 	export let parentSvgId: string;
 	export let matrixGroupId: string;
 	export let className: string = '';
+	export let setNodes: (nodes: INode[]) => INode[];
 
 	// Adapted from https://www.petercollingridge.co.uk/tutorials/svg/interactive/pan-and-zoom/
 	const transformMatrix = [1, 0, 0, 1, 0, 0];
@@ -57,7 +59,16 @@
 			x: shift.x + (1 - scale) * zoomTo.x * $currentScale,
 			y: shift.y + (1 - scale) * zoomTo.y * $currentScale
 		}));
+
 		currentScale.update((currentScale) => currentScale * scale);
+
+		setNodes((nodes) =>
+			nodes.map((node) => ({
+				...node,
+				xPercent: node.xPercent - ((node.x - window.innerWidth / 2) * scale) / window.innerWidth,
+				yPercent: node.yPercent - (node.y - window.innerHeight / 2) * scale
+			}))
+		);
 	};
 
 	const onMouseWheel = (event: WheelEvent) => {

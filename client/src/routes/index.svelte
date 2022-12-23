@@ -2,20 +2,19 @@
 	import Node from '../components/Node.svelte';
 	import type { INode } from '../components/Node.svelte';
 	import Group from '../components/Group.svelte';
-	import { scale as currentScale, shift } from '../stores/Scale.ts';
+	import { scale as currentScale, shift } from '../stores/Scale';
 	import type { IEdge } from '../components/edges/Edge.svelte';
 	import Edge from '../components/edges/Edge.svelte';
-	import { request, gql } from 'graphql-request';
-	import AuthButton from '../components/AuthButton.svelte';
-	import edgeEditPanels from '../stores/EdgeEditPanels.ts';
+	import edgeEditPanels from '../stores/EdgeEditPanels';
 	import EditEdgePanel from '../components/edges/EditEdgePanel.svelte';
+	import edges from '../stores/Edges';
 
 	let nodes: INode[] = [];
 
 	let groupComponent: Group;
 
 	let drawingEdge: IEdge | null = null;
-	let edges: IEdge[] = [];
+	// let edges: IEdge[] = [];
 
 	const createNode = (event: MouseEvent) => {
 		nodes = [
@@ -33,21 +32,33 @@
 	const onResize = () => {
 		nodes = nodes.map((node) => ({
 			...node,
+			// xPercent: node.x / window.innerWidth,
+			// yPercent: node.y / window.innerHeight,
 			x: node.xPercent * (window.innerWidth / $currentScale),
 			y: node.yPercent * (window.innerHeight / $currentScale)
 		}));
 
-		edges = edges.map((edge) => ({
-			...edge,
-			start: {
-				x: edge.startPercent.x * (window.innerWidth / $currentScale),
-				y: edge.startPercent.y * (window.innerHeight / $currentScale)
-			},
-			end: {
-				x: edge.endPercent.x * (window.innerWidth / $currentScale),
-				y: edge.endPercent.y * (window.innerHeight / $currentScale)
-			}
-		}));
+		edges.update((edges) =>
+			edges.map((edge) => ({
+				...edge,
+				startPercent: {
+					x: edge.start.x / window.innerWidth,
+					y: edge.start.y / window.innerHeight
+				},
+				endPercent: {
+					x: edge.end.x / window.innerWidth,
+					y: edge.end.y / window.innerHeight
+				},
+				start: {
+					x: edge.startPercent.x * (window.innerWidth / $currentScale),
+					y: edge.startPercent.y * (window.innerHeight / $currentScale)
+				},
+				end: {
+					x: edge.endPercent.x * (window.innerWidth / $currentScale),
+					y: edge.endPercent.y * (window.innerHeight / $currentScale)
+				}
+			}))
+		);
 	};
 
 	let isMouseDown = false;
@@ -58,8 +69,6 @@
 		if (isShiftDown) {
 			document.elementsFromPoint(event.clientX, event.clientY).forEach((element) => {
 				if (element.id.startsWith('node-')) {
-					console.log(element, 'element');
-
 					const cxPreParsed = element.getAttribute('cx');
 					const cyPreParsed = element.getAttribute('cy');
 
@@ -117,7 +126,7 @@
 					const cx = parseFloat(cxPreParsed);
 					const cy = parseFloat(cyPreParsed);
 
-					edges = [
+					edges.update((edges) => [
 						...edges,
 						{
 							id: edges.length.toString(),
@@ -134,7 +143,7 @@
 							startNode: drawingEdge.startNode,
 							endNode: parseInt(element.id.split('-')[1])
 						}
-					];
+					]);
 				}
 			});
 
@@ -150,38 +159,45 @@
 	};
 
 	const dragNode = (nodeIndex: number, movementX: number, movementY: number) => {
+		nodes[nodeIndex].xPercent =
+			(nodes[nodeIndex].x + movementX / $currentScale) / window.innerWidth;
+		nodes[nodeIndex].yPercent =
+			(nodes[nodeIndex].y + movementY / $currentScale) / window.innerHeight;
+
 		nodes[nodeIndex].x += movementX / $currentScale;
 		nodes[nodeIndex].y += movementY / $currentScale;
 
-		edges = edges.map((edge) => {
-			if (edge.startNode === draggingNodeIndex) {
-				return {
-					...edge,
-					start: {
-						x: edge.start.x + movementX / $currentScale,
-						y: edge.start.y + movementY / $currentScale
-					},
-					startPercent: {
-						x: (edge.start.x + movementX / $currentScale) / window.innerWidth,
-						y: (edge.start.y + movementY / $currentScale) / window.innerHeight
-					}
-				};
-			} else if (edge.endNode === draggingNodeIndex) {
-				return {
-					...edge,
-					end: {
-						x: edge.end.x + movementX / $currentScale,
-						y: edge.end.y + movementY / $currentScale
-					},
-					endPercent: {
-						x: (edge.end.x + movementX / $currentScale) / window.innerWidth,
-						y: (edge.end.y + movementY / $currentScale) / window.innerHeight
-					}
-				};
-			} else {
-				return edge;
-			}
-		});
+		edges.update((edges) =>
+			edges.map((edge) => {
+				if (edge.startNode === draggingNodeIndex) {
+					return {
+						...edge,
+						start: {
+							x: edge.start.x + movementX / $currentScale,
+							y: edge.start.y + movementY / $currentScale
+						},
+						startPercent: {
+							x: (edge.start.x + movementX / $currentScale) / window.innerWidth,
+							y: (edge.start.y + movementY / $currentScale) / window.innerHeight
+						}
+					};
+				} else if (edge.endNode === draggingNodeIndex) {
+					return {
+						...edge,
+						end: {
+							x: edge.end.x + movementX / $currentScale,
+							y: edge.end.y + movementY / $currentScale
+						},
+						endPercent: {
+							x: (edge.end.x + movementX / $currentScale) / window.innerWidth,
+							y: (edge.end.y + movementY / $currentScale) / window.innerHeight
+						}
+					};
+				} else {
+					return edge;
+				}
+			})
+		);
 	};
 
 	const onMouseMove = (event: MouseEvent) => {
@@ -210,6 +226,11 @@
 			isShiftDown = true;
 		}
 	};
+
+	const setNodes = (callback: (nodes: INode[]) => INode[]) => {
+		console.log(nodes, 'nodes');
+		nodes = callback(nodes);
+	};
 </script>
 
 <svelte:window
@@ -231,12 +252,15 @@
 >
 	<Group
 		bind:this={groupComponent}
+		{setNodes}
 		className="h-full w-full"
 		parentSvgId="main-svg"
 		matrixGroupId="matrix-group"
 	>
-		<Edge edge={drawingEdge} />
-		{#each edges as edge}
+		{#if !!drawingEdge}
+			<Edge edge={drawingEdge} />
+		{/if}
+		{#each $edges as edge}
 			<Edge {edge} />
 		{/each}
 		{#each nodes as node, index}
