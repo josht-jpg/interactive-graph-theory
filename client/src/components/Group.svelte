@@ -62,11 +62,19 @@
 
 		currentScale.update((currentScale) => currentScale * scale);
 
+		console.log(scale);
+
 		setNodes((nodes) =>
 			nodes.map((node) => ({
 				...node,
-				xPercent: node.xPercent - ((node.x - window.innerWidth / 2) * scale) / window.innerWidth,
-				yPercent: node.yPercent - (node.y - window.innerHeight / 2) * scale
+				xPercent:
+					node.x > window.innerWidth / 2
+						? node.x / (window.innerWidth / (scale * $currentScale))
+						: node.x / (window.innerWidth * (scale * $currentScale)),
+				yPercent:
+					node.y > window.innerHeight / 2
+						? node.y / (window.innerHeight / scale)
+						: node.y / (window.innerHeight * scale)
 			}))
 		);
 	};

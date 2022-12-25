@@ -7,6 +7,9 @@
 	export let edge: IEdge;
 	export let clickCoordinates: { x: number; y: number };
 
+	let color = edge.color;
+	let colorLabel = edge.labelColor;
+
 	const detailsWidthInPx = 275;
 
 	// TODO: fix obvious bug
@@ -34,6 +37,20 @@
 
 			return newEdges;
 		});
+	};
+
+	// adapted from: https://stackoverflow.com/questions/48484767/javascript-check-if-string-is-valid-css-color
+	const isValidCssColor = (color: string) => {
+		const s = new Option().style;
+		s.color = color;
+		return s.color !== '';
+	};
+
+	const updateEdgeColor = (field: Field, value: string, update: (color: string) => void) => {
+		if (isValidCssColor(value)) {
+			update(value);
+			updateEdge(field, value);
+		}
 	};
 </script>
 
@@ -85,10 +102,10 @@
 						name="Edge Color"
 						value={edge.color ?? ''}
 						on:input={(event) => {
-							console.log(event, event?.target?.value);
-
 							if (event && event.target) {
-								updateEdge(FIELD.color, event.target.value);
+								updateEdgeColor(FIELD.color, event.target.value, (color) => {
+									color = color;
+								});
 							}
 						}}
 					/>
@@ -109,7 +126,9 @@
 						value={edge.labelColor ?? ''}
 						on:input={(event) => {
 							if (event && event.target) {
-								updateEdge(FIELD.colorLabel, event.target.value);
+								updateEdgeColor(FIELD.colorLabel, event.target.value, (color) => {
+									colorLabel = color;
+								});
 							}
 						}}
 					/>

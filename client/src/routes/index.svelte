@@ -63,6 +63,7 @@
 
 	let isMouseDown = false;
 	let draggingNodeIndex: number | null = null;
+	let draggingEdgeId: string | null = null;
 	const onMouseDown = (event: MouseEvent) => {
 		isMouseDown = true;
 
@@ -105,8 +106,16 @@
 		}
 
 		document.elementsFromPoint(event.clientX, event.clientY).forEach((element) => {
+			console.log(element.id);
+
+			if (element.id.startsWith('edge-')) {
+				draggingEdgeId = element.id;
+				return;
+			}
+
 			if (element.id.startsWith('node-')) {
 				draggingNodeIndex = parseInt(element.id.split('-')[1]);
+				return;
 			}
 		});
 	};
@@ -114,6 +123,7 @@
 	const onMouseUp = async (event: MouseEvent) => {
 		isMouseDown = false;
 		draggingNodeIndex = null;
+		draggingEdgeId = null;
 
 		if (!!drawingEdge) {
 			document.elementsFromPoint(event.clientX, event.clientY).forEach((element) => {
@@ -129,7 +139,7 @@
 					edges.update((edges) => [
 						...edges,
 						{
-							id: edges.length.toString(),
+							id: `edge-${edges.length}`,
 							start: drawingEdge.start,
 							end: {
 								x: cx,
@@ -214,7 +224,24 @@
 				}
 			};
 		} else if (draggingNodeIndex !== null) {
+			event.preventDefault();
 			dragNode(draggingNodeIndex, event.movementX, event.movementY);
+		} else if (draggingEdgeId !== null) {
+			edges.update((edges) =>
+				edges.map((edge) => {
+					if (edge.id === draggingEdgeId) {
+						return {
+							...edge,
+							quadratic: {
+								x: event.clientX,
+								y: event.clientY
+							}
+						};
+					} else {
+						return edge;
+					}
+				})
+			);
 		} else if (isMouseDown) {
 			groupComponent.pan(event.movementX, event.movementY);
 		}

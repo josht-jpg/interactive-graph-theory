@@ -16,7 +16,7 @@
 
 <circle
 	id={node.id}
-	class={`absolute outline outline-1 outline-purple-500  ${
+	class={`absolute outline outline-1 outline-slate-500  ${
 		isDragging ? 'cursor-grabbing' : isShiftDown ? 'cursor-crosshair' : 'cursor-grab'
 	} hover:shadow-color-purple-600 rounded-full `}
 	fill="white"

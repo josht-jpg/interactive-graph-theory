@@ -8,6 +8,8 @@
 		startNode: number;
 		// endNode is optional is because it is not defined when the edge is being created
 		endNode?: number;
+		// TODO: rename
+		quadratic?: Coordinate;
 		color?: string;
 		label?: string;
 		labelColor?: string;
@@ -19,6 +21,7 @@
 	import { scale } from '../../stores/Scale';
 
 	import type { Coordinate } from '../../interfaces';
+	import { xlink_attr } from 'svelte/internal';
 	export let edge: IEdge;
 
 	let isMouseOver = false;
@@ -44,7 +47,44 @@
 			strokeOpacity = 0.5;
 		}
 	}
+
+	let isDragging = false;
+	const onMouseUp = () => {
+		isDragging = false;
+	};
+
+	// TODO: clean up
+	let d: string;
+	$: {
+		// console.log(edge, 'edge')s;
+
+		d = `M ${edge.start.x} ${edge.start.y}${
+			!!edge.quadratic
+				? ` Q ${edge.quadratic.x} 
+			${edge.quadratic.y}`
+				: ''
+		} ${edge.end.x} ${edge.end.y}`;
+
+		console.log(d, 'd');
+	}
+
+	let textX: number;
+	let textY: number;
+
+	$: {
+		const q2Multiplier = 1.65;
+		const yDivisor = 3.65;
+
+		textX = !!edge.quadratic
+			? (edge.start.x + edge.end.x + edge.quadratic.x) / 3
+			: (edge.start.x + edge.end.x) / 2;
+		textY = !!edge.quadratic
+			? (edge.start.y + edge.end.y + edge.quadratic.y * q2Multiplier) / yDivisor
+			: (edge.start.y + edge.end.y) / 2 - 10;
+	}
 </script>
+
+<svelte:window on:mouseup={onMouseUp} />
 
 <g
 	class="outline-none"
@@ -60,52 +100,45 @@
 	on:blur={() => {
 		isMouseOver = false;
 	}}
->
-	<line
-		x1={edge.start.x}
-		y1={edge.start.y}
-		x2={edge.end.x}
-		y2={edge.end.y}
-		style={`stroke-width: ${25 * (1 / $scale) /* TODO: fine tune this */};`}
-		class="absolute z-20 cursor-pointer stroke-transparent"
-		on:click={(event) => {
-			// event.stopPropagation();
+	on:mousedown={() => {
+		isDragging = true;
+	}}
+	on:click={(event) => {
+		// event.stopPropagation();
 
-			edgeEditPanels.update((panels) => [
-				...panels,
-				{
-					edge,
-					clickCoordinates: {
-						x: event.clientX,
-						y: event.clientY
-					}
+		edgeEditPanels.update((panels) => [
+			...panels,
+			{
+				edge,
+				clickCoordinates: {
+					x: event.clientX,
+					y: event.clientY
 				}
-			]);
-		}}
-	/>
-	<line
+			}
+		]);
+	}}
+>
+	{#if !!edge.label}
+		<text x={textX} y={textY} class="font-bold text-lg cursor-pointer opacity-75">{edge.label}</text
+		>
+	{/if}
+	<path
 		id={edge.id}
-		x1={edge.start.x}
-		y1={edge.start.y}
-		x2={edge.end.x}
-		y2={edge.end.y}
+		{d}
+		style={`stroke-width: ${25 * (1 / $scale) /* TODO: fine tune this */}; cursor: ${
+			isDragging ? 'grabbing' : 'pointer'
+		};`}
+		fill="none"
+		class="absolute z-20 cursor-pointer stroke-transparent fill-none"
+	/>
+	<path
+		{d}
 		style={`stroke: ${
 			edge.color ?? '#475569'
-		}; stroke-width: ${strokeWidth}; opacity: ${strokeOpacity};}`}
-		class="absolute z-20 cursor-pointer transition-colors"
-		on:click={(event) => {
-			// event.stopPropagation();
-
-			edgeEditPanels.update((panels) => [
-				...panels,
-				{
-					edge,
-					clickCoordinates: {
-						x: event.clientX,
-						y: event.clientY
-					}
-				}
-			]);
-		}}
+		}; stroke-width: ${strokeWidth}; opacity: ${strokeOpacity};} cursor: ${
+			isDragging ? 'grabbing' : 'pointer'
+		};`}
+		fill="none"
+		class="absolute z-20 transition-colors"
 	/>
 </g>
